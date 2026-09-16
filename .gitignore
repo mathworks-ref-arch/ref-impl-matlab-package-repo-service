@@ -1,0 +1,23 @@
+# Build artifacts
+/mpm-repo-server
+/artifactory-server/mpm-repo-server
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# IDE settings
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Go
+vendor/
+coverage.out
+coverage.html

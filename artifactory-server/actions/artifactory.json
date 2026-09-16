@@ -1,0 +1,27 @@
+{
+  "backend": "artifactory-generic",
+  "description": "JFrog Artifactory Generic Repository",
+  "baseURL": "{ARTIFACTORY_URL}",
+  "repoKey": "{ARTIFACTORY_REPO_KEY}",
+  "auth": {
+    "strategy": "bearer",
+    "tokenEnv": "ARTIFACTORY_SERVICE_TOKEN"
+  },
+  "actions": {
+    "list_manifests": {
+      "method": "POST",
+      "url": "{baseURL}/api/search/aql",
+      "contentType": "text/plain",
+      "body": "items.find({\"repo\":\"{repoKey}\",\"name\":{\"$match\":\"*.manifest.json\"}}).include(\"repo\",\"path\",\"name\",\"modified\")",
+      "responseStrategy": "artifactory-aql",
+      "responseMapping": {
+        "items": "results",
+        "itemURL": "{baseURL}/{repoKey}/{item.path}/{item.name}"
+      }
+    },
+    "get_manifest": {
+      "method": "GET",
+      "url": "{baseURL}/{repoKey}/{manifestPath}"
+    }
+  }
+}

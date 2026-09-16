@@ -1,0 +1,23 @@
+{
+  "server": {
+    "listenAddr": ":8080",
+    "basePath": "/v1",
+    "readHeaderTimeout": "10s",
+    "readTimeout": "60s",
+    "writeTimeout": "120s",
+    "idleTimeout": "120s"
+  },
+  "auth": {
+    "requiredHeaders": []
+  },
+  "source": {
+    "actionsFile": "actions/artifactory.json"
+  },
+  "backend": {
+    "readTimeout": "30s",
+    "uploadTimeout": "120s",
+    "maxAQLResponseBytes": 52428800,
+    "maxManifestResponseBytes": 1048576,
+    "maxUploadBytes": 524288000
+  }
+}

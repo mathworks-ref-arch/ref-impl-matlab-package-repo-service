@@ -1,0 +1,10 @@
+# Copyright 2026 The MathWorks, Inc.
+
+repos:
+  - repo: local
+    hooks:
+      - id: copyright-check
+        name: Copyright header check
+        entry: bash -c 'missing=0; for f in "$@"; do head -5 "$f" | grep -q "Copyright.*The MathWorks, Inc." || { echo "Missing copyright header: $f"; missing=1; }; done; exit $missing' copyright-check
+        language: system
+        files: (\.(go|yml|yaml|sh)|Dockerfile)$
