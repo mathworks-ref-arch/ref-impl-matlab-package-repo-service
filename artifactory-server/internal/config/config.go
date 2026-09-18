@@ -37,14 +37,39 @@ type Config struct {
 	Backend BackendConfig `json:"backend"`
 }
 
+// Publish modes select the package publish strategy. See the README's
+// "Publish Modes" section for the operational trade-offs.
+const (
+	// PublishOff disables the publish endpoint entirely (the default).
+	PublishOff = "off"
+	// PublishAtomic uploads the archive and manifest in a single atomic
+	// explode-archive request. Requires Artifactory Pro/Enterprise.
+	PublishAtomic = "atomic"
+	// PublishTwoStep uploads the archive and manifest as two separate requests.
+	// Compatible with OSS Artifactory, which lacks atomic explode-archive.
+	PublishTwoStep = "two-step"
+)
+
 type ServerConfig struct {
-	ListenAddr        string   `json:"listenAddr"`
-	BasePath          string   `json:"basePath"`
-	EnablePublish     bool     `json:"enablePublish"`
+	ListenAddr string `json:"listenAddr"`
+	BasePath   string `json:"basePath"`
+	// PublishMode selects the publish strategy: "off" (default), "atomic", or
+	// "two-step". See the package-level publish mode constants.
+	PublishMode       string   `json:"publishMode"`
 	ReadHeaderTimeout Duration `json:"readHeaderTimeout"`
 	ReadTimeout       Duration `json:"readTimeout"`
 	WriteTimeout      Duration `json:"writeTimeout"`
 	IdleTimeout       Duration `json:"idleTimeout"`
+}
+
+// PublishEnabled reports whether the publish endpoint should be served.
+func (s ServerConfig) PublishEnabled() bool {
+	return s.PublishMode != PublishOff
+}
+
+// AtomicPublish reports whether the atomic explode-archive strategy is selected.
+func (s ServerConfig) AtomicPublish() bool {
+	return s.PublishMode == PublishAtomic
 }
 
 type BackendConfig struct {
@@ -69,7 +94,9 @@ func Load(path string) (*Config, error) {
 		return nil, fmt.Errorf("reading config: %w", err)
 	}
 
-	var cfg Config
+	// Default PublishMode to "off"; json.Unmarshal only overrides fields present
+	// in the file, so an omitted "publishMode" keeps this default.
+	cfg := Config{Server: ServerConfig{PublishMode: PublishOff}}
 	if err := json.Unmarshal(data, &cfg); err != nil {
 		return nil, fmt.Errorf("parsing config: %w", err)
 	}
@@ -80,8 +107,8 @@ func Load(path string) (*Config, error) {
 		cfg.Server.ListenAddr = ":8080"
 	}
 
-	if v := os.Getenv("ENABLE_PUBLISH"); v == "true" || v == "1" {
-		cfg.Server.EnablePublish = true
+	if v := os.Getenv("PUBLISH_MODE"); v != "" {
+		cfg.Server.PublishMode = v
 	}
 
 	if err := cfg.validate(); err != nil {
@@ -110,5 +137,13 @@ func (c *Config) validate() error {
 			return fmt.Errorf("%s must be a positive value", check.name)
 		}
 	}
+
+	switch c.Server.PublishMode {
+	case PublishOff, PublishAtomic, PublishTwoStep:
+	default:
+		return fmt.Errorf("server.publishMode must be one of %q, %q, or %q, got %q",
+			PublishOff, PublishAtomic, PublishTwoStep, c.Server.PublishMode)
+	}
+
 	return nil
 }

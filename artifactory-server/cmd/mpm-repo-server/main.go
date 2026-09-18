@@ -68,19 +68,20 @@ func run(configPath string) error {
 
 	routerCfg := handler.RouterConfig{
 		RequiredHeaders: cfg.Auth.RequiredHeaders,
-		EnablePublish:   cfg.Server.EnablePublish,
+		EnablePublish:   cfg.Server.PublishEnabled(),
 		RefreshHandler:  handler.NewRefreshHandler(idx, refreshFactory),
 	}
 
-	if cfg.Server.EnablePublish {
+	if cfg.Server.PublishEnabled() {
 		uploader := backend.NewUploader(backend.UploaderConfig{
-			BaseURL: actions.BaseURL,
-			RepoKey: actions.RepoKey,
-			Token:   os.Getenv(actions.Auth.TokenEnv),
-			Timeout: cfg.Backend.UploadTimeout.Duration,
+			BaseURL:       actions.BaseURL,
+			RepoKey:       actions.RepoKey,
+			Token:         os.Getenv(actions.Auth.TokenEnv),
+			Timeout:       cfg.Backend.UploadTimeout.Duration,
+			AtomicPublish: cfg.Server.AtomicPublish(),
 		})
 		routerCfg.PublishHandler = handler.NewPublishHandler(idx, uploader, cfg.Backend.MaxUploadBytes)
-		slog.Info("publish endpoint enabled")
+		slog.Info("publish endpoint enabled", "mode", cfg.Server.PublishMode)
 	}
 
 	router := handler.NewRouter(idx, &ready, routerCfg)

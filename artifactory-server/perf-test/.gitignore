@@ -1,0 +1,10 @@
+.env
+.service-token
+mpm-repo-server
+mpm-repo-server.exe
+seed
+seed.exe
+/orchestrator
+/orchestrator.exe
+results.json
+*.tmp

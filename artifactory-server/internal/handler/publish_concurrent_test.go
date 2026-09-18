@@ -149,19 +149,19 @@ func TestPublishHandler_ConcurrentNameSquatting(t *testing.T) {
 func mpackageJSON(name, version, uuid string) string {
 	data := map[string]interface{}{
 		"name":                 name,
-		"version":             version,
-		"id":                  uuid,
-		"formerNames":         []string{},
-		"displayName":         name,
-		"summary":             "",
-		"tags":                []string{},
-		"readme":              "",
-		"provider":            map[string]string{"name": "", "organization": "", "email": "", "url": ""},
-		"folders":             []map[string]interface{}{{"path": "src", "languages": []string{"matlab"}}},
-		"dependencies":        []string{},
+		"version":              version,
+		"id":                   uuid,
+		"formerNames":          []string{},
+		"displayName":          name,
+		"summary":              "",
+		"tags":                 []string{},
+		"readme":               "",
+		"provider":             map[string]string{"name": "", "organization": "", "email": "", "url": ""},
+		"folders":              []map[string]interface{}{{"path": "src", "languages": []string{"matlab"}}},
+		"dependencies":         []string{},
 		"releaseCompatibility": ">=R2024b",
-		"supportedPlatforms":  []map[string]interface{}{{"platform": "any", "architectures": []string{"any"}}},
-		"schemaVersion":       "1.2.0",
+		"supportedPlatforms":   []map[string]interface{}{{"platform": "any", "architectures": []string{"any"}}},
+		"schemaVersion":        "1.2.0",
 	}
 	b, _ := json.Marshal(data)
 	return string(b)

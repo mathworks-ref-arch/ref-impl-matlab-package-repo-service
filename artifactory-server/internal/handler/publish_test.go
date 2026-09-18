@@ -15,9 +15,9 @@ import (
 	"sync/atomic"
 	"testing"
 
+	storagebackend "github.com/mathworks/matlab-package-repository-services/artifactory-server/internal/backend"
 	"github.com/mathworks/matlab-package-repository-services/artifactory-server/internal/domain"
 	"github.com/mathworks/matlab-package-repository-services/artifactory-server/internal/index"
-	storagebackend "github.com/mathworks/matlab-package-repository-services/artifactory-server/internal/backend"
 )
 
 func validMPackageJSON() string {
@@ -78,9 +78,10 @@ func setupPublishTest(t *testing.T, backendHandler http.HandlerFunc) (*httptest.
 	idx.Build(nil)
 
 	uploader := storagebackend.NewUploader(storagebackend.UploaderConfig{
-		BaseURL: backend.URL,
-		RepoKey: "mpm-packages",
-		Token:   "service-token",
+		BaseURL:       backend.URL,
+		RepoKey:       "mpm-packages",
+		Token:         "service-token",
+		AtomicPublish: true,
 	})
 
 	ph := NewPublishHandler(idx, uploader, 500<<20)
@@ -316,9 +317,10 @@ func TestPublishHandler_RealMLTBX(t *testing.T) {
 	idx.Build(nil)
 
 	uploader := storagebackend.NewUploader(storagebackend.UploaderConfig{
-		BaseURL: backend.URL,
-		RepoKey: "mpm-packages",
-		Token:   "service-token",
+		BaseURL:       backend.URL,
+		RepoKey:       "mpm-packages",
+		Token:         "service-token",
+		AtomicPublish: true,
 	})
 
 	ph := NewPublishHandler(idx, uploader, 500<<20)

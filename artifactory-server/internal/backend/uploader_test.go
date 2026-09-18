@@ -49,9 +49,10 @@ func TestUploader_Publish_Success(t *testing.T) {
 	defer server.Close()
 
 	u := NewUploader(UploaderConfig{
-		BaseURL: server.URL,
-		RepoKey: "mpm-packages",
-		Token:   "service-token",
+		BaseURL:       server.URL,
+		RepoKey:       "mpm-packages",
+		Token:         "service-token",
+		AtomicPublish: true,
 	})
 
 	tmp := filepath.Join(t.TempDir(), "test.mltbx")
@@ -103,7 +104,7 @@ func TestUploader_Publish_BundleContainsManifestJSON(t *testing.T) {
 	}))
 	defer server.Close()
 
-	u := NewUploader(UploaderConfig{BaseURL: server.URL, RepoKey: "repo", Token: "t"})
+	u := NewUploader(UploaderConfig{BaseURL: server.URL, RepoKey: "repo", Token: "t", AtomicPublish: true})
 
 	tmp := filepath.Join(t.TempDir(), "test.mltbx")
 	os.WriteFile(tmp, []byte("archive"), 0644)
@@ -138,7 +139,7 @@ func TestUploader_Publish_Conflict(t *testing.T) {
 	}))
 	defer server.Close()
 
-	u := NewUploader(UploaderConfig{BaseURL: server.URL, RepoKey: "repo", Token: "t"})
+	u := NewUploader(UploaderConfig{BaseURL: server.URL, RepoKey: "repo", Token: "t", AtomicPublish: true})
 
 	tmp := filepath.Join(t.TempDir(), "test.mltbx")
 	os.WriteFile(tmp, []byte("content"), 0644)
@@ -155,7 +156,7 @@ func TestUploader_Publish_Failure_Returns_Error(t *testing.T) {
 	}))
 	defer server.Close()
 
-	u := NewUploader(UploaderConfig{BaseURL: server.URL, RepoKey: "repo", Token: "t"})
+	u := NewUploader(UploaderConfig{BaseURL: server.URL, RepoKey: "repo", Token: "t", AtomicPublish: true})
 
 	tmp := filepath.Join(t.TempDir(), "test.mltbx")
 	os.WriteFile(tmp, []byte("content"), 0644)
@@ -174,7 +175,7 @@ func TestUploader_Publish_UsesCallerToken(t *testing.T) {
 	}))
 	defer server.Close()
 
-	u := NewUploader(UploaderConfig{BaseURL: server.URL, RepoKey: "repo", Token: "service-token"})
+	u := NewUploader(UploaderConfig{BaseURL: server.URL, RepoKey: "repo", Token: "service-token", AtomicPublish: true})
 
 	tmp := filepath.Join(t.TempDir(), "test.mltbx")
 	os.WriteFile(tmp, []byte("content"), 0644)
@@ -188,5 +189,123 @@ func TestUploader_Publish_UsesCallerToken(t *testing.T) {
 	}
 	if receivedAuth == "Bearer service-token" {
 		t.Error("used service token instead of caller token")
+	}
+}
+
+type recordedPut struct {
+	path        string
+	auth        string
+	explode     string
+	contentType string
+	body        []byte
+}
+
+func TestUploader_Publish_TwoStep_UploadsArchiveThenManifest(t *testing.T) {
+	var puts []recordedPut
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		puts = append(puts, recordedPut{
+			path:        r.URL.Path,
+			auth:        r.Header.Get("Authorization"),
+			explode:     r.Header.Get("X-Explode-Archive-Atomic"),
+			contentType: r.Header.Get("Content-Type"),
+			body:        body,
+		})
+		w.WriteHeader(http.StatusCreated)
+	}))
+	defer server.Close()
+
+	u := NewUploader(UploaderConfig{
+		BaseURL:       server.URL,
+		RepoKey:       "mpm-packages",
+		Token:         "service-token",
+		AtomicPublish: false,
+	})
+
+	tmp := filepath.Join(t.TempDir(), "test.mltbx")
+	os.WriteFile(tmp, []byte("fake archive content"), 0644)
+
+	if err := u.Publish(tmp, testManifest(), "user-token"); err != nil {
+		t.Fatalf("Publish() error = %v", err)
+	}
+
+	if len(puts) != 2 {
+		t.Fatalf("got %d PUT requests, want 2", len(puts))
+	}
+
+	base := "/mpm-packages/math/220e47fe-0b34-4abe-991c-f8f121984346/1.1.0"
+	archivePut, manifestPut := puts[0], puts[1]
+
+	if archivePut.path != base+"/math-1.1.0.mltbx" {
+		t.Errorf("archive path = %q, want %q", archivePut.path, base+"/math-1.1.0.mltbx")
+	}
+	if !bytes.Equal(archivePut.body, []byte("fake archive content")) {
+		t.Errorf("archive body = %q, want raw archive content", archivePut.body)
+	}
+	if archivePut.explode != "" {
+		t.Errorf("two-step archive PUT set X-Explode-Archive-Atomic = %q, want unset", archivePut.explode)
+	}
+
+	if manifestPut.path != base+"/math-1.1.0.manifest.json" {
+		t.Errorf("manifest path = %q, want %q", manifestPut.path, base+"/math-1.1.0.manifest.json")
+	}
+	if !strings.Contains(string(manifestPut.body), `"name": "math"`) {
+		t.Errorf("manifest body does not contain expected content: %s", manifestPut.body)
+	}
+
+	for _, p := range puts {
+		if p.auth != "Bearer user-token" {
+			t.Errorf("auth = %q, want caller token", p.auth)
+		}
+	}
+}
+
+func TestUploader_Publish_TwoStep_ManifestFailure_ReportsOrphanedArchive(t *testing.T) {
+	var count int
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		count++
+		if count == 1 {
+			w.WriteHeader(http.StatusCreated) // archive PUT succeeds
+			return
+		}
+		w.WriteHeader(http.StatusInternalServerError) // manifest PUT fails
+	}))
+	defer server.Close()
+
+	u := NewUploader(UploaderConfig{BaseURL: server.URL, RepoKey: "repo", Token: "t", AtomicPublish: false})
+
+	tmp := filepath.Join(t.TempDir(), "test.mltbx")
+	os.WriteFile(tmp, []byte("content"), 0644)
+
+	err := u.Publish(tmp, testManifest(), "user-token")
+	if err == nil {
+		t.Fatal("expected error when manifest upload fails")
+	}
+	if !strings.Contains(err.Error(), "math-1.1.0.mltbx") {
+		t.Errorf("error should name the orphaned archive, got: %v", err)
+	}
+	if !strings.Contains(err.Error(), "manually") {
+		t.Errorf("error should indicate manual cleanup, got: %v", err)
+	}
+}
+
+func TestUploader_Publish_TwoStep_ArchiveFailure(t *testing.T) {
+	var count int
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		count++
+		w.WriteHeader(http.StatusInternalServerError) // archive PUT fails
+	}))
+	defer server.Close()
+
+	u := NewUploader(UploaderConfig{BaseURL: server.URL, RepoKey: "repo", Token: "t", AtomicPublish: false})
+
+	tmp := filepath.Join(t.TempDir(), "test.mltbx")
+	os.WriteFile(tmp, []byte("content"), 0644)
+
+	if err := u.Publish(tmp, testManifest(), "user-token"); err == nil {
+		t.Fatal("expected error when archive upload fails")
+	}
+	if count != 1 {
+		t.Errorf("made %d PUT requests, want 1 (manifest should not upload after archive fails)", count)
 	}
 }

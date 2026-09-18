@@ -1,0 +1,41 @@
+# Copyright 2026 The MathWorks, Inc.
+
+services:
+  postgres:
+    image: releases-docker.jfrog.io/postgres:17.6-alpine
+    container_name: perf-test-postgres
+    environment:
+      - POSTGRES_DB=artifactory
+      - POSTGRES_USER=${POSTGRES_USER:-artifactory}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  artifactory:
+    image: releases-docker.jfrog.io/jfrog/artifactory-oss:7.133.10
+    container_name: perf-test-artifactory
+    depends_on:
+      - postgres
+    ports:
+      - "127.0.0.1:8082:8082"
+      - "127.0.0.1:8081:8081"
+    volumes:
+      - artifactory_data:/var/opt/jfrog/artifactory
+    environment:
+      - JF_SHARED_DATABASE_TYPE=postgresql
+      - JF_SHARED_DATABASE_USERNAME=${POSTGRES_USER:-artifactory}
+      - JF_SHARED_DATABASE_PASSWORD=${POSTGRES_PASSWORD:-password}
+      - JF_SHARED_DATABASE_URL=jdbc:postgresql://perf-test-postgres:5432/artifactory
+      - JF_SHARED_DATABASE_DRIVER=org.postgresql.Driver
+      - JF_SHARED_SECURITY_MASTERKEY=${JF_SHARED_SECURITY_MASTERKEY}
+      - JF_SHARED_SECURITY_JOINKEY=${JF_SHARED_SECURITY_JOINKEY}
+      - JF_JFCONNECT_ENABLED=false
+      - JF_FRONTEND_JFCONNECT_ENABLED=false
+    restart: unless-stopped
+
+volumes:
+  artifactory_data:
+    name: perf-test-artifactory-data
+  postgres_data:
+    name: perf-test-postgres-data

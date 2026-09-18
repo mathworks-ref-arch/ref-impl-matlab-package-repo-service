@@ -132,4 +132,3 @@ func TestQueryByName_NotFound(t *testing.T) {
 		t.Fatalf("expected 404, got %d", rr.Code)
 	}
 }
-

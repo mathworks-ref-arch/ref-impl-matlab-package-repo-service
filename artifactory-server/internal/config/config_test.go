@@ -115,10 +115,10 @@ func TestLoad_ValidConfig(t *testing.T) {
 
 func TestLoad_ListenAddr(t *testing.T) {
 	for _, tt := range []struct {
-		name       string
-		overrides  []string
-		portEnv    string
-		wantAddr   string
+		name      string
+		overrides []string
+		portEnv   string
+		wantAddr  string
 	}{
 		{
 			name:     "default",
@@ -160,6 +160,74 @@ func TestLoad_ListenAddr(t *testing.T) {
 	}
 }
 
+func TestLoad_PublishMode(t *testing.T) {
+	for _, tt := range []struct {
+		name        string
+		overrides   []string
+		env         string
+		wantMode    string
+		wantEnabled bool
+		wantAtomic  bool
+	}{
+		{
+			name:        "defaults to off when omitted",
+			wantMode:    PublishOff,
+			wantEnabled: false,
+			wantAtomic:  false,
+		},
+		{
+			name:        "config sets atomic",
+			overrides:   []string{`{"server": {"publishMode": "atomic"}}`},
+			wantMode:    PublishAtomic,
+			wantEnabled: true,
+			wantAtomic:  true,
+		},
+		{
+			name:        "config sets two-step",
+			overrides:   []string{`{"server": {"publishMode": "two-step"}}`},
+			wantMode:    PublishTwoStep,
+			wantEnabled: true,
+			wantAtomic:  false,
+		},
+		{
+			name:        "env overrides default",
+			env:         PublishAtomic,
+			wantMode:    PublishAtomic,
+			wantEnabled: true,
+			wantAtomic:  true,
+		},
+		{
+			name:        "env overrides config",
+			overrides:   []string{`{"server": {"publishMode": "atomic"}}`},
+			env:         PublishTwoStep,
+			wantMode:    PublishTwoStep,
+			wantEnabled: true,
+			wantAtomic:  false,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			path := writeTemp(t, validConfigJSON(t, tt.overrides...))
+			if tt.env != "" {
+				t.Setenv("PUBLISH_MODE", tt.env)
+			}
+
+			cfg, err := Load(path)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if cfg.Server.PublishMode != tt.wantMode {
+				t.Errorf("PublishMode = %q, want %q", cfg.Server.PublishMode, tt.wantMode)
+			}
+			if cfg.Server.PublishEnabled() != tt.wantEnabled {
+				t.Errorf("PublishEnabled() = %v, want %v", cfg.Server.PublishEnabled(), tt.wantEnabled)
+			}
+			if cfg.Server.AtomicPublish() != tt.wantAtomic {
+				t.Errorf("AtomicPublish() = %v, want %v", cfg.Server.AtomicPublish(), tt.wantAtomic)
+			}
+		})
+	}
+}
+
 func TestLoad_InvalidConfig(t *testing.T) {
 	for _, tt := range []struct {
 		name string
@@ -187,6 +255,10 @@ func TestLoad_InvalidConfig(t *testing.T) {
 		{
 			name: "zero maxUploadBytes",
 			data: validConfigJSON(t, `{"backend": {"maxUploadBytes": 0}}`),
+		},
+		{
+			name: "invalid publishMode",
+			data: validConfigJSON(t, `{"server": {"publishMode": "bogus"}}`),
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {

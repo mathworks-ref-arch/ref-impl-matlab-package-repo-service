@@ -13,16 +13,16 @@ const mpackagePath = "fsroot/resources/mpackage.json"
 const maxMPackageSize = 1 << 20 // 1 MB
 
 type MPackage struct {
-	Name                 string          `json:"name"`
-	Version              string          `json:"version"`
-	ID                   string          `json:"id"`
-	FormerNames          []string        `json:"formerNames"`
-	DisplayName          string          `json:"displayName"`
-	Summary              string          `json:"summary"`
+	Name                 string           `json:"name"`
+	Version              string           `json:"version"`
+	ID                   string           `json:"id"`
+	FormerNames          []string         `json:"formerNames"`
+	DisplayName          string           `json:"displayName"`
+	Summary              string           `json:"summary"`
 	Provider             MPackageProvider `json:"provider"`
-	Dependencies         json.RawMessage `json:"dependencies"`
-	ReleaseCompatibility string          `json:"releaseCompatibility"`
-	SupportedPlatforms   json.RawMessage `json:"supportedPlatforms"`
+	Dependencies         json.RawMessage  `json:"dependencies"`
+	ReleaseCompatibility string           `json:"releaseCompatibility"`
+	SupportedPlatforms   json.RawMessage  `json:"supportedPlatforms"`
 }
 
 type MPackageProvider struct {

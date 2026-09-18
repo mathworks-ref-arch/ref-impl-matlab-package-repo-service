@@ -15,18 +15,18 @@ var (
 )
 
 type PackageManifest struct {
-	Version                   string          `json:"version"`
-	Name                      string          `json:"name"`
-	ID                        string          `json:"id"`
-	DisplayName               string          `json:"displayName"`
-	Summary                   string          `json:"summary"`
-	Provider                  Provider        `json:"provider"`
-	ReleaseCompatibility      string          `json:"releaseCompatibility"`
-	Dependencies              Dependencies    `json:"dependencies"`
-	SupportedPlatforms        json.RawMessage `json:"supportedPlatforms"`
-	FormerNames               []string        `json:"formerNames"`
-	Archives                  []Archive       `json:"archives"`
-	RequiredAdditionalSoftware []string       `json:"requiredAdditionalSoftware"`
+	Version                    string          `json:"version"`
+	Name                       string          `json:"name"`
+	ID                         string          `json:"id"`
+	DisplayName                string          `json:"displayName"`
+	Summary                    string          `json:"summary"`
+	Provider                   Provider        `json:"provider"`
+	ReleaseCompatibility       string          `json:"releaseCompatibility"`
+	Dependencies               Dependencies    `json:"dependencies"`
+	SupportedPlatforms         json.RawMessage `json:"supportedPlatforms"`
+	FormerNames                []string        `json:"formerNames"`
+	Archives                   []Archive       `json:"archives"`
+	RequiredAdditionalSoftware []string        `json:"requiredAdditionalSoftware"`
 }
 
 type Provider struct {

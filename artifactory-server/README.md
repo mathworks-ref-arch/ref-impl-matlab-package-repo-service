@@ -22,7 +22,7 @@ docker run -p 8080:8080 \
   -e ARTIFACTORY_URL=https://artifactory.corp.com/artifactory \
   -e ARTIFACTORY_REPO_KEY=mw-packages \
   -e ARTIFACTORY_SERVICE_TOKEN=your-service-token \
-  -e ENABLE_PUBLISH=true \
+  -e PUBLISH_MODE=atomic \
   mpm-repo-server
 ```
 
@@ -41,7 +41,19 @@ curl http://localhost:8080/health-check
 | `ARTIFACTORY_REPO_KEY` | Yes | Name of the Generic repository |
 | `ARTIFACTORY_SERVICE_TOKEN` | Yes | Token with read access (indexing at startup) |
 | `PORT` | No | Server port (default: `8080`) |
-| `ENABLE_PUBLISH` | No | Enable the publish endpoint (`true` or `1`) |
+| `PUBLISH_MODE` | No | Publish strategy: `off` (default), `atomic`, or `two-step`. See [Publish Modes](#publish-modes) |
+
+### Publish Modes
+
+`PUBLISH_MODE` (or the `server.publishMode` config setting) selects how the publish endpoint behaves. The publish endpoint is served only when the mode is `atomic` or `two-step`.
+
+| Mode | Artifactory edition | Behavior |
+|------|---------------------|----------|
+| `off` (default) | — | Publish endpoint is disabled. |
+| `atomic` | **Pro / Enterprise** | Archive and manifest are bundled and uploaded in a single request using the `X-Explode-Archive-Atomic` header. The publish is all-or-nothing. |
+| `two-step` | **OSS** (also works on Pro/Enterprise) | Archive and manifest are uploaded as two separate requests. Required for OSS Artifactory, which does not support atomic explode-archive. |
+
+> **Note on two-step mode:** Because the archive and manifest are uploaded separately, a publish is **not atomic**. If the manifest upload fails after the archive has been uploaded, the archive is left in place and the publish returns an error naming the orphaned file. An administrator must remove it manually. The service token still requires only write access — no rollback (and therefore no delete permission) is performed.
 
 ### Server Configuration File
 
@@ -118,7 +130,7 @@ Create a `.env` file:
 ARTIFACTORY_URL=https://artifactory.corp.com/artifactory
 ARTIFACTORY_REPO_KEY=mw-packages
 ARTIFACTORY_SERVICE_TOKEN=your-service-token
-ENABLE_PUBLISH=true
+PUBLISH_MODE=atomic
 ```
 
 Then run:
@@ -136,7 +148,7 @@ go build -o mpm-repo-server ./cmd/mpm-repo-server
 export ARTIFACTORY_URL=https://artifactory.corp.com/artifactory
 export ARTIFACTORY_REPO_KEY=mw-packages
 export ARTIFACTORY_SERVICE_TOKEN=your-service-token
-export ENABLE_PUBLISH=true
+export PUBLISH_MODE=atomic
 
 ./mpm-repo-server --config configs/server-artifactory.json
 ```
@@ -289,5 +301,60 @@ This service implements the [MATLAB Package Repository API](../docs/matlab-packa
 
 ---
 
+
+## Performance Testing
+
+The repository includes a self-contained performance test suite that benchmarks the server against a real Artifactory OSS instance running locally in Docker®.
+
+### Prerequisites
+
+- Docker (with Docker Compose)
+- Go 1.26+
+
+### Quick Start
+
+```bash
+cd perf-test && go run ./cmd/orchestrator
+```
+
+This will:
+1. Generate cryptographic credentials for Artifactory OSS
+2. Start Artifactory OSS + PostgreSQL in Docker (~60s first boot)
+3. Initialize Artifactory (set password, generate token)
+4. Build the Go server from source (including any local modifications)
+5. Seed packages incrementally (default: 100, 1,000, 10,000)
+6. Run all performance benchmarks at each scale x concurrency combination
+7. Print results, tear down containers, and delete all credentials
+
+### Configuration
+
+Override defaults with environment variables:
+
+```bash
+cd perf-test
+PERF_PACKAGE_COUNTS="100,500,1000,5000" \
+PERF_CONCURRENCY_LEVELS="5,10,25,50" \
+PERF_DURATION="10s" \
+PERF_SOAK_DURATION="1m" \
+go run ./cmd/orchestrator
+```
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PERF_PACKAGE_COUNTS` | `100,1000,10000` | Comma-separated package counts (tested incrementally) |
+| `PERF_CONCURRENCY_LEVELS` | `5,25,50` | Comma-separated concurrency levels |
+| `PERF_DURATION` | `30s` | Duration per load test scenario |
+| `PERF_SOAK_DURATION` | `15m` | Duration for soak test (set to `1m` for a quick check) |
+
+### Notes
+
+- Performance tests are NOT run by `go test ./...`
+- They require Docker and take several minutes to complete
+- All credentials are auto-generated and destroyed after each run
+- Results vary by machine — use for relative comparisons, not absolute numbers
+
+See [`perf-test/README.md`](perf-test/README.md) for full details.
+
+---
 
 *Copyright 2026 The MathWorks, Inc.*

@@ -14,4 +14,4 @@ services:
       - ARTIFACTORY_SERVICE_TOKEN
       - USE_API_DOWNLOAD_URLS
       - BASE_URL
-      - ENABLE_PUBLISH
+      - PUBLISH_MODE
