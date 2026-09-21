@@ -11,7 +11,7 @@ on:
 
 jobs:
   perf-test:
-    runs-on: [self-hosted, runner-source=AWS, Linux, X64]
+    runs-on: ${{ github.repository_owner == 'mathworks-ref-arch' && fromJSON('["ubuntu-latest"]') || fromJSON('["self-hosted", "runner-source=AWS", "Linux", "X64"]') }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5

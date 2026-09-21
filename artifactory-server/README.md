@@ -1,6 +1,6 @@
 # Artifactory Reference Implementation
 
-This document shows you how to set up and run a MATLAB® package repository service that enables the MATLAB Package Manager (MPM) to discover, install, and publish MATLAB packages (`.mltbx` files) from your organization's Artifactory instance.
+This document shows you how to set up and run a MATLAB® package repository service. The service enables the MATLAB Package Manager (MPM) to discover, install, and publish MATLAB packages (`.mltbx` files) from your organization's Artifactory instance.
 
 JFrog® Artifactory® can store MATLAB package files but does not understand MATLAB package metadata — it cannot query packages by name or UUID, resolve dependencies, or filter by platform and MATLAB release compatibility. This service bridges that gap by indexing MATLAB package metadata stored in Artifactory and serving the data in the structured format that MPM expects.
 
@@ -11,7 +11,7 @@ JFrog® Artifactory® can store MATLAB package files but does not understand MAT
 - MATLAB R2026b or later (for package consumers)
 - Artifactory access tokens for the service and for users
 
-> **Note:** For MATLAB releases prior to R2026b or for advanced use cases, contact [MathWorks Consulting](https://www.mathworks.com/services/consulting.html).
+> **Note:** For MATLAB releases before R2026b or for advanced use cases, contact [MathWorks Consulting](https://www.mathworks.com/services/consulting.html).
 
 ## Quick Start
 
@@ -95,11 +95,11 @@ The service reads its configuration from `configs/server-artifactory.json`. This
 
 ## Admin Setup
 
-The service is deployed once by an admin for the entire team. Individual users do not need to run it.
+An admin deploys the service once for the entire team. Individual users do not need to run it.
 
 ### Create a Generic Repository in Artifactory
 
-Create a **Generic** repository type in Artifactory. When packages are published via the service, the following layout is created automatically:
+Create a **Generic** repository type in Artifactory. When you publish packages through the service, the service creates the following layout automatically:
 
 ```
 <repo-key>/
@@ -221,6 +221,9 @@ Returns `201 Created` on success, or `409 Conflict` if the same package version 
 
 ## Consumer Workflow
 
+Consumers never interact with Artifactory directly. MATLAB talks to the service, which handles all backend communication.
+Consumers run the following steps in MATLAB.
+
 ### Set Your Access Token
 
 ```bash
@@ -248,20 +251,18 @@ mpminstall MyToolbox
 mpminstall MyToolbox@1.2.0
 ```
 
-Consumers never interact with Artifactory directly. MATLAB talks to the service, which handles all backend communication.
-
 ---
 
 ## Index Refresh
 
-When packages are added or deleted directly in Artifactory, rebuild the in-memory index:
+If you add or delete packages directly in Artifactory, rebuild the in-memory index:
 
 ```bash
 curl -X POST https://mprs.corp.com:8080/v1/admin/refresh \
   -H "Authorization: Bearer $YOUR_TOKEN"
 ```
 
-The refresh endpoint uses the caller's Bearer token to authenticate with the backend (not the server's service token).
+The refresh endpoint uses the caller's Bearer token to authenticate with the backend (not the server service token).
 
 ---
 
@@ -285,7 +286,7 @@ For details on the service's authentication model, secrets handling, container h
 
 ## MPM API Specification
 
-This service implements the [MATLAB Package Repository API](../docs/matlab-package-repository-api-spec.md). The following table summarizes what is covered in this reference implementation:
+This service implements the [MATLAB Package Repository API](../docs/matlab-package-repository-api-spec.md). The following table summarizes what this reference implementation covers:
 
 | Capability | Status | Needs Authentication |
 |------------|--------|---------------------|
