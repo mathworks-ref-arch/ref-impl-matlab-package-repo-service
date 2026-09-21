@@ -29,8 +29,3 @@ jobs:
           else
             go run ./cmd/orchestrator
           fi
-      - uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: perf-results
-          path: artifactory-server/perf-test/results.json
