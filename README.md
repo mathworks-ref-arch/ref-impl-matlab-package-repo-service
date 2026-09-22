@@ -1,4 +1,4 @@
-# MATLAB Package Repository Reference Implementations
+# Reference Implementation for MATLAB Package Repository Service for Artifactory
 
 This repository shows how the MATLAB® Package Manager (MPM) can integrate with different types of backend storage by providing reference implementations of the [MATLAB Package Repository REST API](./docs/matlab-package-repository-api-spec.md). Once integrated, your developers can develop and deploy MATLAB packages (.mltbx files) to your choice of storage, and your end users can use MPM to install packages from that storage into MATLAB.
 
