@@ -1,12 +1,10 @@
 # Reference Implementation for MATLAB Package Repository Service for Artifactory
 
-This repository shows how the MATLAB® Package Manager (MPM) can integrate with different types of backend storage by providing reference implementations of the [MATLAB Package Repository REST API](./docs/matlab-package-repository-api-spec.md). Once integrated, your developers can develop and deploy MATLAB packages (.mltbx files) to your choice of storage, and your end users can use MPM to install packages from that storage into MATLAB.
+This repository provides a reference implementation of the [MATLAB Package Repository REST API](./docs/matlab-package-repository-api-spec.md) for JFrog® Artifactory®, showing how the MATLAB® Package Manager (MPM) can integrate with your organization's existing artifact storage. Once integrated, your developers can develop and deploy MATLAB packages (.mltbx files) to Artifactory, and your end users can use MPM to install packages from Artifactory into MATLAB.
 
-## Reference Implementation
+## Get Started
 
-- **[Artifactory](artifactory-server/):** How to set up and run a MATLAB package repository service that enables the MATLAB Package Manager to discover, install, and publish MATLAB packages from your organization's JFrog® Artifactory® instance.
-
-Additional implementations for other storage backends are planned.
+**[Artifactory](artifactory-server/):** How to set up and run a MATLAB package repository service that enables the MATLAB Package Manager to discover, install, and publish MATLAB packages from your organization's JFrog Artifactory instance.
 
 **Limitations:**
 * The MATLAB Package Repository API is only supported by MPM in MATLAB **R2026b** and later

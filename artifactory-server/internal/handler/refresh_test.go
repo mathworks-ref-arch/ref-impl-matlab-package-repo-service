@@ -9,8 +9,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/mathworks/matlab-package-repository-services/artifactory-server/internal/domain"
-	"github.com/mathworks/matlab-package-repository-services/artifactory-server/internal/index"
+	"github.com/mathworks-ref-arch/ref-impl-matlab-package-repo-service/artifactory-server/internal/domain"
+	"github.com/mathworks-ref-arch/ref-impl-matlab-package-repo-service/artifactory-server/internal/index"
 )
 
 type fakeSource struct {

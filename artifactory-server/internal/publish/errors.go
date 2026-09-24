@@ -5,7 +5,7 @@ package publish
 import (
 	"errors"
 
-	"github.com/mathworks/matlab-package-repository-services/artifactory-server/internal/domain"
+	"github.com/mathworks-ref-arch/ref-impl-matlab-package-repo-service/artifactory-server/internal/domain"
 )
 
 var ErrConflict = errors.New("package version already exists")

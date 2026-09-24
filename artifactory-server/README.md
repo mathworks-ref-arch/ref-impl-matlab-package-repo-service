@@ -15,12 +15,17 @@ JFrog® Artifactory® can store MATLAB package files but does not understand MAT
 
 ## Quick Start
 
+Clone the repository, then build and run the service from the `artifactory-server` directory:
+
 ```bash
+git clone <repository-url>
+cd <repository-directory>/artifactory-server
+
 docker build -t mpm-repo-server .
 
 docker run -p 8080:8080 \
   -e ARTIFACTORY_URL=https://artifactory.corp.com/artifactory \
-  -e ARTIFACTORY_REPO_KEY=mw-packages \
+  -e ARTIFACTORY_REPO_KEY=mpm-packages \
   -e ARTIFACTORY_SERVICE_TOKEN=your-service-token \
   -e PUBLISH_MODE=atomic \
   mpm-repo-server
@@ -37,7 +42,7 @@ curl http://localhost:8080/health-check
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `ARTIFACTORY_URL` | Yes | Artifactory base URL |
+| `ARTIFACTORY_URL` | Yes | Artifactory base URL, including the `http://` or `https://` scheme |
 | `ARTIFACTORY_REPO_KEY` | Yes | Name of the Generic repository |
 | `ARTIFACTORY_SERVICE_TOKEN` | Yes | Token with read access (indexing at startup) |
 | `PORT` | No | Server port (default: `8080`) |
@@ -63,7 +68,6 @@ The service reads its configuration from `configs/server-artifactory.json`. This
 {
   "server": {
     "listenAddr": ":8080",
-    "basePath": "/v1",
     "readHeaderTimeout": "10s",
     "readTimeout": "60s",
     "writeTimeout": "120s",
@@ -128,7 +132,7 @@ Create a `.env` file:
 
 ```
 ARTIFACTORY_URL=https://artifactory.corp.com/artifactory
-ARTIFACTORY_REPO_KEY=mw-packages
+ARTIFACTORY_REPO_KEY=mpm-packages
 ARTIFACTORY_SERVICE_TOKEN=your-service-token
 PUBLISH_MODE=atomic
 ```
@@ -146,7 +150,7 @@ cd artifactory-server
 go build -o mpm-repo-server ./cmd/mpm-repo-server
 
 export ARTIFACTORY_URL=https://artifactory.corp.com/artifactory
-export ARTIFACTORY_REPO_KEY=mw-packages
+export ARTIFACTORY_REPO_KEY=mpm-packages
 export ARTIFACTORY_SERVICE_TOKEN=your-service-token
 export PUBLISH_MODE=atomic
 
@@ -221,7 +225,8 @@ Returns `201 Created` on success, or `409 Conflict` if the same package version 
 
 ## Consumer Workflow
 
-Consumers never interact with Artifactory directly. MATLAB talks to the service, which handles all backend communication.
+MATLAB queries the service for package metadata. The manifests the service returns carry download URLs that point at Artifactory, so MATLAB fetches the `.mltbx` files from Artifactory directly, using the consumer's token. Consumers therefore need network access to both the service and Artifactory.
+
 Consumers run the following steps in MATLAB.
 
 ### Set Your Access Token
@@ -277,7 +282,8 @@ For details on the service's authentication model, secrets handling, container h
 | Symptom | Cause | Fix |
 |---------|-------|-----|
 | Service fails to start | Cannot reach Artifactory | Verify `ARTIFACTORY_URL` is correct and the service token is valid |
-| `401 Unauthorized` on queries | Missing or invalid token | Ensure `ARTIFACTORY_TOKEN` env var is set and the token has read access |
+| `connection refused` at startup, e.g. `dial tcp [::1]:8082` | `ARTIFACTORY_URL` uses `localhost`, which inside the container means the container itself, not the host | Point `ARTIFACTORY_URL` at the host, for example `http://host.docker.internal:8082/artifactory` (`docker-compose.yml` already maps that name to the host gateway). Set this before publishing: published manifests record download URLs derived from `ARTIFACTORY_URL`, and re-indexing does not rewrite them |
+| `401 Unauthorized` on publish | The request carried no `Authorization: Bearer <token>` header | Send a bearer token. Publish and refresh require one because the service passes it through to Artifactory |
 | `409 Conflict` on publish | Package version already exists | Bump the version before re-publishing |
 | Empty index after startup | Wrong repo key or no manifests | Verify `ARTIFACTORY_REPO_KEY` matches your repository and that it contains `*.manifest.json` files |
 | MATLAB cannot connect | Wrong URL in repo-config.json | Ensure the `url` field points to the service (not directly to Artifactory) |
@@ -295,7 +301,6 @@ This service implements the [MATLAB Package Repository API](../docs/matlab-packa
 | `GET /v1/packages/index.json` | Implemented (single page, no pagination) | No |
 | `POST /v1/packages/publish` | Implemented | Yes |
 | `GET /health-check` | Implemented | No |
-| Authentication (header presence check) | Implemented | N/A |
 | Pagination (`nextUrl`) | Not yet implemented | N/A |
 | `GET /version` | Not yet implemented | N/A |
 | Download endpoint | Not yet implemented | N/A |

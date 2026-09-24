@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mathworks/matlab-package-repository-services/artifactory-server/internal/index"
+	"github.com/mathworks-ref-arch/ref-impl-matlab-package-repo-service/artifactory-server/internal/index"
 )
 
 type SourceFactory func(token string) index.ManifestSource

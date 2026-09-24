@@ -2,7 +2,6 @@
 MPRS-Spec: 2
 Title: MATLAB Package Manifest Schema
 Author: MathWorks Package Management Team
-Status: Draft
 Type: Standards Track
 Created: 2026-05-18
 Requires: MPRS-Spec 1, RFC 2119, Semantic Versioning 2.0.0
@@ -491,55 +490,6 @@ rules:
 
 Clients SHOULD be written to tolerate the presence of unknown fields in
 manifest objects (forward compatibility).
-
-
-## Provisional Fields (Deferred)
-
-The following fields are under review for inclusion in future releases. They are
-NOT normative for R2026b implementations.
-
-### Archive Signature Verification (Target: R2027a)
-
-Additional fields in the Archive object to support cryptographic signature
-verification of downloaded packages:
-
-```json
-{
-  "platforms": ["agnostic"],
-  "url": "...",
-  "size": 15728640,
-  "digests": [{ "alg": "sha512", "digest": "..." }],
-  "signature": {
-    "algorithm": "<string>",
-    "value": "<string>",
-    "certificate": "<string>"
-  }
-}
-```
-
-### Dependency Type (Target: TBD)
-
-An optional `type` field on `Dependency` objects to distinguish required vs.
-optional dependencies:
-
-```json
-{
-  "name": "Deep_Learning_Toolbox",
-  "id": "...",
-  "compatibleVersions": ">=1.0.0",
-  "type": "optional"
-}
-```
-
-Valid values: `"required"` (default), `"optional"`.
-
-### `hasLicenseFile` (Target: R2026b)
-
-A boolean field indicating whether the package archive contains a license file:
-
-```json
-"hasLicenseFile": true
-```
 
 
 ## Out of Scope

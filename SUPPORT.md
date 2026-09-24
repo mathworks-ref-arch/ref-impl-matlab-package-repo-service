@@ -2,7 +2,7 @@
 
 ## Bugs and Feature Requests
 
-If you encounter a bug or have a feature request related to these reference implementations, please [open a GitHub issue](../../issues).
+If you encounter a bug or have a feature request related to this reference implementation, please [open a GitHub issue](../../issues).
 
 ## MATLAB Product Questions
 

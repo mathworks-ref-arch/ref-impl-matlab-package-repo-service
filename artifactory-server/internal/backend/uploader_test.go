@@ -14,8 +14,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mathworks/matlab-package-repository-services/artifactory-server/internal/domain"
-	"github.com/mathworks/matlab-package-repository-services/artifactory-server/internal/publish"
+	"github.com/mathworks-ref-arch/ref-impl-matlab-package-repo-service/artifactory-server/internal/domain"
+	"github.com/mathworks-ref-arch/ref-impl-matlab-package-repo-service/artifactory-server/internal/publish"
 )
 
 func testManifest() *domain.PackageManifest {

@@ -2,7 +2,6 @@
 Spec: 1
 Title: MATLAB Package Repository API Specification
 Author: MathWorks Package Management Team
-Status: Draft
 Type: Standards Track
 Created: 2026-05-18
 Requires: RFC 2119, RFC 6750, RFC 7231, RFC 7578, RFC 9110
@@ -253,8 +252,7 @@ Authorization: Bearer <token>
 
 **Response (200 OK):**
 
-The response body is a JSON array of package manifest objects (one per version),
-ordered by version (newest first).
+The response body is a JSON array of package manifest objects (one per version).
 
 <details>
 <summary>Example response (click to expand)</summary>
@@ -370,8 +368,7 @@ Authorization: Bearer <token>
 
 **Response (200 OK):**
 
-The response body is a JSON array of package manifest objects (one per version),
-ordered by version (newest first).
+The response body is a JSON array of package manifest objects (one per version).
 
 <details>
 <summary>Example response (click to expand)</summary>
@@ -710,9 +707,9 @@ for server-side filtering.
 ### Pagination of Per-Package Version Lists
 
 The `by-uuid` and `by-name` endpoints return all versions of a single package
-in a single response. For customers we have spoken with, package version counts
-are typically in the range of 10-20 at any given time. If version counts grow
-significantly, a future revision MAY add pagination to these endpoints.
+in a single response. Package version counts are expected to be in the range of
+10-20 at any given time. If version counts grow significantly, a future revision
+MAY add pagination to these endpoints.
 
 ### Caching and Conditional Requests
 
@@ -730,18 +727,6 @@ referenced via the `archives[].url` field in metadata, which contains an
 absolute URL to the storage backend. A future version MAY define a download
 path (e.g., `GET /v1/packages/by-uuid/{uuid}/versions/{version}/download`) for
 registries that wish to proxy artifact downloads through the API.
-
-
-## Open Issues
-
-1. Should the API also accept pre-built package metadata for advanced CI/CD use
-   cases, in addition to server-side generation from `mpackage.json`?
-
-2. Should the registry validate `mpackage.json` content against a formal schema
-   and reject malformed metadata, or accept any parseable JSON?
-
-3. Should `GET /version` also report readiness status, or is `/health-check`
-   sufficient?
 
 
 ## References

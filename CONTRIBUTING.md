@@ -1,6 +1,6 @@
-# Contribute to MATLAB Package Repository Reference Implementations
+# Contribute to the MATLAB Package Repository Reference Implementation
 
-MathWorks welcomes your feedback on the MATLAB Package Repository reference implementations.
+MathWorks welcomes your feedback on this reference implementation of the MATLAB Package Repository Service for Artifactory.
 
 **Issues:** To report bugs, suggest features, or discuss ideas, [open an issue](../../issues). MathWorks actively monitors and responds to issues.
 

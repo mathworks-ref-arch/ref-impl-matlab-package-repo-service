@@ -52,7 +52,6 @@ const (
 
 type ServerConfig struct {
 	ListenAddr string `json:"listenAddr"`
-	BasePath   string `json:"basePath"`
 	// PublishMode selects the publish strategy: "off" (default), "atomic", or
 	// "two-step". See the package-level publish mode constants.
 	PublishMode       string   `json:"publishMode"`

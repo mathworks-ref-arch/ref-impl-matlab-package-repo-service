@@ -11,9 +11,9 @@ import (
 	"sync/atomic"
 	"testing"
 
-	storagebackend "github.com/mathworks/matlab-package-repository-services/artifactory-server/internal/backend"
-	"github.com/mathworks/matlab-package-repository-services/artifactory-server/internal/domain"
-	"github.com/mathworks/matlab-package-repository-services/artifactory-server/internal/index"
+	storagebackend "github.com/mathworks-ref-arch/ref-impl-matlab-package-repo-service/artifactory-server/internal/backend"
+	"github.com/mathworks-ref-arch/ref-impl-matlab-package-repo-service/artifactory-server/internal/domain"
+	"github.com/mathworks-ref-arch/ref-impl-matlab-package-repo-service/artifactory-server/internal/index"
 )
 
 func mpackageJSONWithNameAndUUID(name, uuid, version string) string {

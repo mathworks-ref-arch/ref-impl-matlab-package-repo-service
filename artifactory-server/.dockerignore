@@ -1,0 +1,17 @@
+# The Docker build context is this directory, so this file (not the one at the
+# repository root) is what Docker applies to `docker build .` here.
+
+# Secrets — never send these to the Docker daemon
+.env
+.env.*
+!.env.example
+
+# Local build artifacts
+mpm-repo-server
+coverage.out
+coverage.html
+
+# Not needed to build the server
+perf-test/
+*.md
+.git

@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mathworks/matlab-package-repository-services/artifactory-server/internal/domain"
+	"github.com/mathworks-ref-arch/ref-impl-matlab-package-repo-service/artifactory-server/internal/domain"
 )
 
 var defaultTestLimits = SourceLimits{
@@ -215,6 +215,163 @@ func TestLoadActions_UnsetEnvVar(t *testing.T) {
 	_, err := LoadActions(path)
 	if err == nil {
 		t.Fatal("expected error for unresolved env var placeholder")
+	}
+}
+
+func TestLoadActions_TrimsSlashes(t *testing.T) {
+	data := `{
+		"backend": "artifactory-generic",
+		"baseURL": "https://art.example.com/artifactory///",
+		"repoKey": "/mpm-packages/",
+		"auth": {"strategy": "bearer", "tokenEnv": "MY_TOKEN"},
+		"actions": {}
+	}`
+	dir := t.TempDir()
+	path := dir + "/actions.json"
+	if err := os.WriteFile(path, []byte(data), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := LoadActions(path)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.BaseURL != "https://art.example.com/artifactory" {
+		t.Fatalf("expected https://art.example.com/artifactory, got %s", cfg.BaseURL)
+	}
+	if cfg.RepoKey != "mpm-packages" {
+		t.Fatalf("expected mpm-packages, got %s", cfg.RepoKey)
+	}
+}
+
+func TestLoadActions_TrimsSlashesFromEnvVars(t *testing.T) {
+	data := `{
+		"backend": "artifactory-generic",
+		"baseURL": "{ARTIFACTORY_URL}",
+		"repoKey": "{ARTIFACTORY_REPO_KEY}",
+		"auth": {"strategy": "bearer", "tokenEnv": "MY_TOKEN"},
+		"actions": {}
+	}`
+	dir := t.TempDir()
+	path := dir + "/actions.json"
+	if err := os.WriteFile(path, []byte(data), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Setenv("ARTIFACTORY_URL", "https://art.resolved.com/artifactory/")
+	t.Setenv("ARTIFACTORY_REPO_KEY", "my-repo/")
+
+	cfg, err := LoadActions(path)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.BaseURL != "https://art.resolved.com/artifactory" {
+		t.Fatalf("expected https://art.resolved.com/artifactory, got %s", cfg.BaseURL)
+	}
+	if cfg.RepoKey != "my-repo" {
+		t.Fatalf("expected my-repo, got %s", cfg.RepoKey)
+	}
+}
+
+func TestLoadActions_RejectsBaseURLWithoutScheme(t *testing.T) {
+	data := `{
+		"backend": "artifactory-generic",
+		"baseURL": "artifactory.corp.com",
+		"repoKey": "mpm-packages",
+		"auth": {"strategy": "bearer", "tokenEnv": "MY_TOKEN"},
+		"actions": {}
+	}`
+	dir := t.TempDir()
+	path := dir + "/actions.json"
+	if err := os.WriteFile(path, []byte(data), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	_, err := LoadActions(path)
+	if err == nil {
+		t.Fatal("expected error for baseURL without a scheme")
+	}
+}
+
+func TestLoadActions_RejectsNonHTTPBaseURL(t *testing.T) {
+	data := `{
+		"backend": "artifactory-generic",
+		"baseURL": "ftp://art.example.com",
+		"repoKey": "mpm-packages",
+		"auth": {"strategy": "bearer", "tokenEnv": "MY_TOKEN"},
+		"actions": {}
+	}`
+	dir := t.TempDir()
+	path := dir + "/actions.json"
+	if err := os.WriteFile(path, []byte(data), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	_, err := LoadActions(path)
+	if err == nil {
+		t.Fatal("expected error for non-HTTP baseURL scheme")
+	}
+}
+
+func TestLoadActions_RejectsBaseURLWithoutHostname(t *testing.T) {
+	// url.Parse reports Host as ":8080" here, so validation must compare
+	// Hostname, which excludes the port.
+	data := `{
+		"backend": "artifactory-generic",
+		"baseURL": "http://:8080",
+		"repoKey": "mpm-packages",
+		"auth": {"strategy": "bearer", "tokenEnv": "MY_TOKEN"},
+		"actions": {}
+	}`
+	dir := t.TempDir()
+	path := dir + "/actions.json"
+	if err := os.WriteFile(path, []byte(data), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	_, err := LoadActions(path)
+	if err == nil {
+		t.Fatal("expected error for baseURL with a port but no hostname")
+	}
+}
+
+func TestLoadActions_RejectsMalformedBaseURL(t *testing.T) {
+	data := `{
+		"backend": "artifactory-generic",
+		"baseURL": "https://art.example.com:notaport",
+		"repoKey": "mpm-packages",
+		"auth": {"strategy": "bearer", "tokenEnv": "MY_TOKEN"},
+		"actions": {}
+	}`
+	dir := t.TempDir()
+	path := dir + "/actions.json"
+	if err := os.WriteFile(path, []byte(data), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	_, err := LoadActions(path)
+	if err == nil {
+		t.Fatal("expected error for malformed baseURL")
+	}
+}
+
+func TestLoadActions_RejectsEmptyBaseURL(t *testing.T) {
+	data := `{
+		"backend": "artifactory-generic",
+		"baseURL": "",
+		"repoKey": "mpm-packages",
+		"auth": {"strategy": "bearer", "tokenEnv": "MY_TOKEN"},
+		"actions": {}
+	}`
+	dir := t.TempDir()
+	path := dir + "/actions.json"
+	if err := os.WriteFile(path, []byte(data), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	_, err := LoadActions(path)
+	if err == nil {
+		t.Fatal("expected error for empty baseURL")
 	}
 }
 

@@ -138,16 +138,14 @@ perf-test:
       with:
         go-version: '1.26'
     - run: cd artifactory-server/perf-test && go run ./cmd/orchestrator
-    - uses: actions/upload-artifact@v3
-      with:
-        name: perf-results
-        path: artifactory-server/perf-test/results.json
 ```
+
+The orchestrator writes `results.json` into the working directory.
 
 ### What You Can Do With the Results
 
 - **Regression detection:** Compare `latency_ms.p99` against previous runs and alert if latency increases by more than a defined threshold
-- **Build artifacts:** Upload `results.json` as a build artifact for historical tracking
+- **Build artifacts:** Retain `results.json` with your CI system's artifact mechanism for historical tracking
 - **PR gating:** Parse with `jq` and fail the pipeline if any metric exceeds a limit
 - **Dashboards:** Feed results into a time-series store to visualize performance trends
 

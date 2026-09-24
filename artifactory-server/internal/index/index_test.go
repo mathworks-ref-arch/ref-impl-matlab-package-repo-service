@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mathworks/matlab-package-repository-services/artifactory-server/internal/domain"
+	"github.com/mathworks-ref-arch/ref-impl-matlab-package-repo-service/artifactory-server/internal/domain"
 )
 
 func sampleManifests() []domain.PackageManifest {

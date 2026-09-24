@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mathworks/matlab-package-repository-services/artifactory-server/internal/domain"
+	"github.com/mathworks-ref-arch/ref-impl-matlab-package-repo-service/artifactory-server/internal/domain"
 )
 
 type Index struct {

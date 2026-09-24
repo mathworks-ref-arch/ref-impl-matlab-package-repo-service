@@ -10,10 +10,10 @@ import (
 	"os"
 	"sync/atomic"
 
-	"github.com/mathworks/matlab-package-repository-services/artifactory-server/internal/backend"
-	"github.com/mathworks/matlab-package-repository-services/artifactory-server/internal/config"
-	"github.com/mathworks/matlab-package-repository-services/artifactory-server/internal/handler"
-	"github.com/mathworks/matlab-package-repository-services/artifactory-server/internal/index"
+	"github.com/mathworks-ref-arch/ref-impl-matlab-package-repo-service/artifactory-server/internal/backend"
+	"github.com/mathworks-ref-arch/ref-impl-matlab-package-repo-service/artifactory-server/internal/config"
+	"github.com/mathworks-ref-arch/ref-impl-matlab-package-repo-service/artifactory-server/internal/handler"
+	"github.com/mathworks-ref-arch/ref-impl-matlab-package-repo-service/artifactory-server/internal/index"
 )
 
 func main() {

@@ -5,6 +5,7 @@ package backend
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"strings"
 )
@@ -38,6 +39,8 @@ type responseMapping struct {
 
 // LoadActions reads and parses an actions JSON file.
 // Config fields wrapped in {ENV_VAR_NAME} are resolved from environment variables.
+// Trailing slashes are trimmed from baseURL and repoKey, and baseURL must be an
+// absolute http or https URL.
 func LoadActions(path string) (*ActionsConfig, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -59,6 +62,16 @@ func LoadActions(path string) (*ActionsConfig, error) {
 		cfg.RepoKey = resolved
 	}
 
+	// URLs are built by joining baseURL and repoKey with "/" separators, so trim
+	// operator-supplied slashes to avoid empty path segments such as
+	// "https://host/artifactory//api/search/aql".
+	cfg.BaseURL = strings.TrimRight(cfg.BaseURL, "/")
+	cfg.RepoKey = strings.Trim(cfg.RepoKey, "/")
+
+	if err := validateBaseURL(cfg.BaseURL); err != nil {
+		return nil, fmt.Errorf("invalid baseURL: %w", err)
+	}
+
 	return &cfg, nil
 }
 
@@ -72,4 +85,25 @@ func resolveEnvPlaceholder(val string) (string, error) {
 		return "", fmt.Errorf("env var %s is empty or not set", envName)
 	}
 	return envVal, nil
+}
+
+// validateBaseURL rejects base URLs that would otherwise fail at request time
+// with an opaque transport error, such as a host name with no scheme.
+func validateBaseURL(raw string) error {
+	if raw == "" {
+		return fmt.Errorf("must not be empty")
+	}
+	u, err := url.Parse(raw)
+	if err != nil {
+		return fmt.Errorf("%q is not a valid URL: %w", raw, err)
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return fmt.Errorf("%q must start with http:// or https://, for example https://artifactory.example.com/artifactory", raw)
+	}
+	// Hostname strips any port, so this also rejects a bare port such as
+	// "http://:8080", which url.Parse reports as a non-empty Host.
+	if u.Hostname() == "" {
+		return fmt.Errorf("%q must include a host, for example https://artifactory.example.com/artifactory", raw)
+	}
+	return nil
 }

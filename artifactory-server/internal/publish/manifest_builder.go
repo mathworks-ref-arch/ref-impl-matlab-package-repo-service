@@ -5,7 +5,7 @@ package publish
 import (
 	"encoding/json"
 
-	"github.com/mathworks/matlab-package-repository-services/artifactory-server/internal/domain"
+	"github.com/mathworks-ref-arch/ref-impl-matlab-package-repo-service/artifactory-server/internal/domain"
 )
 
 func BuildManifest(mp *MPackage, archive domain.Archive) (*domain.PackageManifest, error) {

@@ -1,7 +1,6 @@
 {
   "server": {
     "listenAddr": ":8080",
-    "basePath": "/v1",
     "readHeaderTimeout": "10s",
     "readTimeout": "60s",
     "writeTimeout": "120s",

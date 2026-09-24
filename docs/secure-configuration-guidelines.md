@@ -6,14 +6,15 @@ their own security policies.
 
 ## Authentication Model
 
-The service performs **header-presence validation only** - it checks that an
-`Authorization` header exists but does not verify identity, roles, or token
-validity. Artifactory validates the token when the service proxies requests to
-the backend. This means:
+The service does not authenticate requests. It never verifies identity, roles, or
+token validity - Artifactory validates tokens when they are used against the
+backend. This means:
 
 - The service does not maintain user accounts or sessions
 - Access control decisions are delegated entirely to Artifactory
-- Without a reverse proxy or API gateway in front, any valid Artifactory token grants access to all packages
+- Query endpoints are served from the in-memory index and are unauthenticated: anyone who can reach the service can read the package index, including every package name, version, UUID, and download URL
+- Publish and refresh requests must carry a bearer token, which is passed through to Artifactory and validated there
+- Artifact downloads are authenticated by Artifactory, not by this service
 
 ## Secrets
 
@@ -38,7 +39,8 @@ The provided Dockerfile:
 - Exposes only port 8080
 - Runs as root (no `USER` directive)
 - Includes a shell and package manager (`sh`, `apk`)
-- Has no `.dockerignore` - all files in the build context are sent to the Docker daemon
+- Excludes `.env` files and local build artifacts from the build context via
+  `artifactory-server/.dockerignore`, so secrets are not sent to the Docker daemon
 
 ## Network Assumptions
 
@@ -47,7 +49,8 @@ TLS-terminating reverse proxy or load balancer configured with TLS 1.2 or
 higher. Because tokens are sent as plaintext `Authorization` headers, deploying
 without TLS exposes credentials to interception.
 
-- Only port 8080 needs to be reachable by clients; no other ports are used
+- The service itself listens on one port only (8080 by default)
+- Clients must reach both the service and Artifactory: package manifests carry download URLs that point at Artifactory, and clients fetch archives from there directly
 - The service requires outbound HTTPS access to Artifactory
 - The `/health-check` endpoint is unauthenticated by design - restrict access at the network layer if this is unacceptable
 

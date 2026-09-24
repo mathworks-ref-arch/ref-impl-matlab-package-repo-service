@@ -2,7 +2,7 @@
 
 package index
 
-import "github.com/mathworks/matlab-package-repository-services/artifactory-server/internal/domain"
+import "github.com/mathworks-ref-arch/ref-impl-matlab-package-repo-service/artifactory-server/internal/domain"
 
 // ManifestSource provides package manifests from a backend.
 type ManifestSource interface {

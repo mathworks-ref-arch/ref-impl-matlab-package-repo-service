@@ -166,25 +166,3 @@ func TestExtractMPackage_OversizedMPackageJSON(t *testing.T) {
 		t.Fatal("expected error for oversized mpackage.json")
 	}
 }
-
-func TestExtractMPackage_RealMLTBX(t *testing.T) {
-	path := "/mathworks/devel/sandbox/tsapre/metadata_test_server/v1/artifacts/math/220e47fe-0b34-4abe-991c-f8f121984346/1.1.0/math-1.1.0.mltbx"
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		t.Skip("real MLTBX not available")
-	}
-
-	mp, err := ExtractMPackage(path)
-	if err != nil {
-		t.Fatalf("ExtractMPackage() error = %v", err)
-	}
-
-	if mp.Name != "math" {
-		t.Errorf("Name = %q, want %q", mp.Name, "math")
-	}
-	if mp.Version != "1.1.0" {
-		t.Errorf("Version = %q, want %q", mp.Version, "1.1.0")
-	}
-	if mp.ID != "220e47fe-0b34-4abe-991c-f8f121984346" {
-		t.Errorf("ID = %q, want %q", mp.ID, "220e47fe-0b34-4abe-991c-f8f121984346")
-	}
-}

@@ -57,7 +57,7 @@ func validConfigJSON(t *testing.T, overrides ...string) string {
 
 func TestLoad_ValidConfig(t *testing.T) {
 	data := validConfigJSON(t,
-		`{"server": {"listenAddr": ":9090", "basePath": "/v1",
+		`{"server": {"listenAddr": ":9090",
 			"readHeaderTimeout": "5s", "readTimeout": "30s",
 			"writeTimeout": "60s", "idleTimeout": "90s"}}`,
 		`{"auth": {"requiredHeaders": ["Authorization"]}}`,
@@ -74,9 +74,6 @@ func TestLoad_ValidConfig(t *testing.T) {
 
 	if cfg.Server.ListenAddr != ":9090" {
 		t.Errorf("ListenAddr = %s, want :9090", cfg.Server.ListenAddr)
-	}
-	if cfg.Server.BasePath != "/v1" {
-		t.Errorf("BasePath = %s, want /v1", cfg.Server.BasePath)
 	}
 	if len(cfg.Auth.RequiredHeaders) != 1 || cfg.Auth.RequiredHeaders[0] != "Authorization" {
 		t.Errorf("RequiredHeaders = %v, want [Authorization]", cfg.Auth.RequiredHeaders)

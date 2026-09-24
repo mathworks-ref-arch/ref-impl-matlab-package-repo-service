@@ -6,18 +6,15 @@ import (
 	"archive/zip"
 	"bytes"
 	"encoding/json"
-	"io"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
 	"sync/atomic"
 	"testing"
 
-	storagebackend "github.com/mathworks/matlab-package-repository-services/artifactory-server/internal/backend"
-	"github.com/mathworks/matlab-package-repository-services/artifactory-server/internal/domain"
-	"github.com/mathworks/matlab-package-repository-services/artifactory-server/internal/index"
+	storagebackend "github.com/mathworks-ref-arch/ref-impl-matlab-package-repo-service/artifactory-server/internal/backend"
+	"github.com/mathworks-ref-arch/ref-impl-matlab-package-repo-service/artifactory-server/internal/domain"
+	"github.com/mathworks-ref-arch/ref-impl-matlab-package-repo-service/artifactory-server/internal/index"
 )
 
 func validMPackageJSON() string {
@@ -301,84 +298,3 @@ func TestPublishHandler_NoAuth_Returns401(t *testing.T) {
 		t.Errorf("status = %d, want %d", rr.Code, http.StatusUnauthorized)
 	}
 }
-
-func TestPublishHandler_RealMLTBX(t *testing.T) {
-	path := "/mathworks/devel/sandbox/tsapre/metadata_test_server/v1/artifacts/math/220e47fe-0b34-4abe-991c-f8f121984346/1.1.0/math-1.1.0.mltbx"
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		t.Skip("real MLTBX not available")
-	}
-
-	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusCreated)
-	}))
-	defer backend.Close()
-
-	idx := index.New()
-	idx.Build(nil)
-
-	uploader := storagebackend.NewUploader(storagebackend.UploaderConfig{
-		BaseURL:       backend.URL,
-		RepoKey:       "mpm-packages",
-		Token:         "service-token",
-		AtomicPublish: true,
-	})
-
-	ph := NewPublishHandler(idx, uploader, 500<<20)
-
-	ready := &atomic.Bool{}
-	ready.Store(true)
-	router := NewRouter(idx, ready, RouterConfig{
-		RequiredHeaders: []string{"Authorization"},
-		EnablePublish:   true,
-		PublishHandler:  ph,
-	})
-
-	mltbxData, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var body bytes.Buffer
-	writer := multipart.NewWriter(&body)
-	part, _ := writer.CreateFormFile("file", filepath.Base(path))
-	part.Write(mltbxData)
-	writer.Close()
-
-	req := httptest.NewRequest(http.MethodPost, "/v1/packages/publish", &body)
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-	req.Header.Set("Authorization", "Bearer test-token")
-
-	rr := httptest.NewRecorder()
-	router.ServeHTTP(rr, req)
-
-	if rr.Code != http.StatusCreated {
-		t.Fatalf("status = %d, want %d; body = %s", rr.Code, http.StatusCreated, rr.Body.String())
-	}
-
-	var manifest domain.PackageManifest
-	json.NewDecoder(rr.Body).Decode(&manifest)
-	if manifest.Name != "math" {
-		t.Errorf("Name = %q, want %q", manifest.Name, "math")
-	}
-	if manifest.Version != "1.1.0" {
-		t.Errorf("Version = %q, want %q", manifest.Version, "1.1.0")
-	}
-
-	// Verify it appears in index
-	req2 := httptest.NewRequest(http.MethodGet, "/v1/packages/by-name/math.json", nil)
-	req2.Header.Set("Authorization", "Bearer test-token")
-	rr2 := httptest.NewRecorder()
-	router.ServeHTTP(rr2, req2)
-	if rr2.Code != http.StatusOK {
-		t.Fatalf("query after publish status = %d", rr2.Code)
-	}
-
-	var results []domain.PackageManifest
-	json.NewDecoder(rr2.Body).Decode(&results)
-	if len(results) != 1 {
-		t.Errorf("expected 1 result after publish, got %d", len(results))
-	}
-}
-
-// Suppress unused import warning
-var _ = io.Discard

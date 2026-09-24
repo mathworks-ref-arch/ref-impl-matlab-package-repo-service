@@ -1,7 +1,6 @@
 {
   "server": {
     "listenAddr": ":8080",
-    "basePath": "/v1",
     "publishMode": "two-step",
     "readHeaderTimeout": "10s",
     "readTimeout": "30m",
